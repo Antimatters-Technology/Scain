@@ -1,0 +1,247 @@
+version: '3.8'
+
+services:
+  # MQTT Broker
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: scain-mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./config/mosquitto.passwd:/mosquitto/config/mosquitto.passwd
+    networks:
+      - scain-network
+    restart: unless-stopped
+
+  # CouchDB for Fabric peer
+  couchdb:
+    image: couchdb:3.3
+    container_name: knowgraph-couchdb
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=adminpw
+    ports:
+      - "5984:5984"
+    volumes:
+      - couchdb-data:/opt/couchdb/data
+    networks:
+      - scain-network
+    restart: unless-stopped
+
+  # Hyperledger Fabric Peer
+  peer0:
+    image: hyperledger/fabric-peer:2.5
+    container_name: knowgraph-peer0
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=knowgraph_scain-network
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.knowgraph.com
+      - CORE_PEER_ADDRESS=peer0.knowgraph.com:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.knowgraph.com:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.knowgraph.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.knowgraph.com:7051
+      - CORE_PEER_LOCALMSPID=KnowGraphMSP
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb:5984
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
+    ports:
+      - "7051:7051"
+      - "7052:7052"
+    volumes:
+      - /var/run/:/host/var/run/
+      - ./config/crypto-config/peerOrganizations/knowgraph.com/peers/peer0.knowgraph.com/msp:/etc/hyperledger/fabric/msp
+      - ./config/crypto-config/peerOrganizations/knowgraph.com/peers/peer0.knowgraph.com/tls:/etc/hyperledger/fabric/tls
+      - peer0-data:/var/hyperledger/production
+    depends_on:
+      - couchdb
+    networks:
+      - scain-network
+    restart: unless-stopped
+
+  # Fabric REST API Gateway
+  fabric-rest-api:
+    image: hyperledger/fabric-rest:latest
+    container_name: knowgraph-fabric-rest
+    environment:
+      - FABRIC_ENDPOINT=peer0.knowgraph.com:7051
+      - FABRIC_MSP_ID=KnowGraphMSP
+      - FABRIC_CHANNEL=knowgraph-channel
+      - FABRIC_CHAINCODE=knowgraph-cc
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./config/crypto-config:/etc/hyperledger/fabric/crypto-config
+    depends_on:
+      - peer0
+    networks:
+      - scain-network
+    restart: unless-stopped
+
+  # OpenEPCIS Repository
+  openepcis:
+    image: openepcis/openepcis-repository:latest
+    container_name: knowgraph-openepcis
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/openepcis
+      - SPRING_DATASOURCE_USERNAME=openepcis
+      - SPRING_DATASOURCE_PASSWORD=openepcis
+      - QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://postgres:5432/openepcis
+      - QUARKUS_DATASOURCE_USERNAME=openepcis
+      - QUARKUS_DATASOURCE_PASSWORD=openepcis
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - scain-network
+    restart: unless-stopped
+
+  # PostgreSQL for OpenEPCIS
+  postgres:
+    image: postgres:15
+    container_name: knowgraph-postgres
+    environment:
+      - POSTGRES_DB=openepcis
+      - POSTGRES_USER=openepcis
+      - POSTGRES_PASSWORD=openepcis
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - scain-network
+    restart: unless-stopped
+
+  # MQTT to Fabric Bridge
+  mqtt-bridge:
+    build:
+      context: .
+      dockerfile: docker/mqtt-bridge.Dockerfile
+    container_name: knowgraph-mqtt-bridge
+    environment:
+      - MQTT_BROKER=mosquitto:1883
+      - FABRIC_ENDPOINT=fabric-rest-api:4000
+      - OPENEPCIS_ENDPOINT=http://openepcis:8080
+    depends_on:
+      - mosquitto
+      - fabric-rest-api
+      - openepcis
+    networks:
+      - scain-network
+    restart: unless-stopped
+
+  # Next.js Dashboard
+  dashboard:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: knowgraph-dashboard
+    environment:
+      - NEXT_PUBLIC_FABRIC_API=http://localhost:4000
+      - NEXT_PUBLIC_OPENEPCIS_API=http://localhost:8080
+      - NEXT_PUBLIC_MQTT_WS=ws://localhost:9001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - fabric-rest-api
+      - openepcis
+    networks:
+      - scain-network
+    restart: unless-stopped
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: knowgraph-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - scain-network
+    restart: unless-stopped
+
+  # Fabric CA (Certificate Authority)
+  ca:
+    image: hyperledger/fabric-ca:1.5
+    container_name: knowgraph-ca
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca.knowgraph.com
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_PORT=7054
+      - FABRIC_CA_SERVER_OPERATIONS_LISTENADDRESS=0.0.0.0:17054
+    ports:
+      - "7054:7054"
+      - "17054:17054"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    volumes:
+      - ./config/fabric-ca-server:/etc/hyperledger/fabric-ca-server
+    networks:
+      - scain-network
+    restart: unless-stopped
+
+  # Orderer
+  orderer:
+    image: hyperledger/fabric-orderer:2.5
+    container_name: knowgraph-orderer
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_CLUSTER_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_BOOTSTRAPMETHOD=none
+      - ORDERER_CHANNELPARTICIPATION_ENABLED=true
+      - ORDERER_ADMIN_TLS_ENABLED=true
+      - ORDERER_ADMIN_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_ADMIN_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_ADMIN_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_TLS_CLIENTROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_LISTENADDRESS=0.0.0.0:7053
+      - ORDERER_OPERATIONS_LISTENADDRESS=0.0.0.0:17050
+      - ORDERER_METRICS_PROVIDER=prometheus
+    ports:
+      - "7050:7050"
+      - "7053:7053"
+      - "17050:17050"
+    volumes:
+      - ./config/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+      - ./config/crypto-config/ordererOrganizations/knowgraph.com/orderers/orderer.knowgraph.com/msp:/var/hyperledger/orderer/msp
+      - ./config/crypto-config/ordererOrganizations/knowgraph.com/orderers/orderer.knowgraph.com/tls:/var/hyperledger/orderer/tls
+      - orderer-data:/var/hyperledger/production/orderer
+    networks:
+      - scain-network
+    restart: unless-stopped
+
+networks:
+  scain-network:
+    driver: bridge
+
+volumes:
+  couchdb-data:
+  postgres-data:
+  redis-data:
+  peer0-data:
+  orderer-data: 
