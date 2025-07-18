@@ -6,21 +6,43 @@ A proof‑of‑concept pallet tag and ledger stack that **meets FSMA §204 (U.S.
 
 ## 🚀 Quick Start
 
+### Web Dashboard
 ```bash
-# Setup development environment
-make setup
+# Clone and install dependencies
+git clone https://github.com/your-org/scain.git
+cd scain
+npm install
 
-# Start development network
-make devnet
+# Start development server
+npm run dev
+```
+Visit [http://localhost:3000](http://localhost:3000) for the dashboard.
 
-# Flash ESP32 firmware
-make flash
+### Chaincode (Go)
+```bash
+# Run chaincode tests
+cd chaincode
+go test ./...
 
-# Start dashboard
-make dashboard
+# Or use the convenience script
+npm run test:go
 ```
 
-Visit [http://localhost:3000](http://localhost:3000) for the dashboard.
+### Firmware (ESP32)
+```bash
+# Flash ESP32 firmware (requires ESP-IDF)
+make flash
+
+# Or compile only
+cd src/firmware && idf.py build
+```
+
+### Full Development Environment
+```bash
+# Setup everything (blockchain network, MQTT, etc.)
+make setup
+make devnet
+```
 
 ---
 

@@ -1,19 +1,31 @@
-# KnowGraph Makefile
+# Scain Makefile
 # Provides targets for firmware flashing, development network setup, and dashboard
 
-.PHONY: help flash devnet dashboard test clean install setup
+.PHONY: help flash devnet dashboard dev build test clean install setup
 
 # Default target
 help:
-	@echo "KnowGraph Food Traceability MVP"
+	@echo "Scain Food Traceability MVP"
 	@echo "Available targets:"
+	@echo "  dev       - Start development server (frontend)"
+	@echo "  build     - Build frontend for production"
 	@echo "  flash     - Flash ESP32 firmware"
 	@echo "  devnet    - Start development network (Docker)"
 	@echo "  dashboard - Start Next.js dashboard"
 	@echo "  test      - Run all tests"
+	@echo "  test-go   - Run Go tests only"
 	@echo "  clean     - Clean build artifacts"
 	@echo "  install   - Install dependencies"
 	@echo "  setup     - Initial project setup"
+
+# Frontend targets
+dev:
+	@echo "Starting development server..."
+	cd frontend && npm run dev
+
+build:
+	@echo "Building frontend for production..."
+	cd frontend && npm run build
 
 # ESP32 Firmware targets
 flash:
@@ -55,15 +67,15 @@ devnet-clean:
 # Dashboard targets
 dashboard:
 	@echo "Starting Next.js dashboard..."
-	cd web && npm run dev
+	cd frontend && npm run dev
 
 dashboard-build:
 	@echo "Building dashboard for production..."
-	cd web && npm run build
+	cd frontend && npm run build
 
 dashboard-test:
 	@echo "Running dashboard tests..."
-	cd web && npm test
+	cd frontend && npm test
 
 # Chaincode targets
 chaincode-package:
@@ -90,13 +102,18 @@ test:
 	make test-dashboard
 	make test-firmware
 
+test-go:
+	@echo "Running Go tests..."
+	cd chaincode && go test -v ./...
+	cd src/tests && go test -v ./...
+
 test-chaincode:
 	@echo "Testing chaincode..."
 	cd chaincode && go test -v ./...
 
 test-dashboard:
 	@echo "Testing dashboard..."
-	cd web && npm test
+	cd frontend && npm test
 
 test-firmware:
 	@echo "Testing firmware..."
@@ -113,7 +130,7 @@ setup:
 install:
 	@echo "Installing dependencies..."
 	# Install Node.js dependencies
-	cd web && npm install
+	cd frontend && npm install
 	# Install Go dependencies
 	cd chaincode && go mod tidy
 	# Install Python dependencies for scripts
@@ -160,7 +177,7 @@ status:
 clean:
 	@echo "Cleaning build artifacts..."
 	cd src/firmware && idf.py clean
-	cd web && rm -rf .next node_modules/.cache
+	cd frontend && rm -rf .next node_modules/.cache
 	cd chaincode && go clean
 	rm -rf build/
 	rm -rf dist/
@@ -191,12 +208,12 @@ generate-certs:
 
 update-deps:
 	@echo "Updating dependencies..."
-	cd web && npm update
+	cd frontend && npm update
 	cd chaincode && go get -u ./...
 
 lint:
 	@echo "Running linters..."
-	cd web && npm run lint
+	cd frontend && npm run lint
 	cd chaincode && golangci-lint run
 
 # Development utilities
@@ -214,7 +231,7 @@ simulate-sensors:
 # Documentation
 docs:
 	@echo "Generating documentation..."
-	cd web && npm run build-docs
+	cd frontend && npm run build-docs
 	cd chaincode && godoc -http=:6060
 
 # Variables
