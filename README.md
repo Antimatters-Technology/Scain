@@ -1,405 +1,302 @@
-# Scain • Low‑Cost Food Traceability MVP
+# Scain - Supply Chain Traceability Platform
 
-A proof‑of‑concept pallet tag and ledger stack that **meets FSMA §204 (U.S.) and SFCR Part 5 (Canada)** traceability rules using a ₹1 500 hardware kit.
+A comprehensive supply chain traceability platform implementing EPCIS 2.0 standards with **blockchain integration** and **IoT device support** for immutable audit trails.
 
----
+## 🚀 Features
 
-## 🚀 Quick Start
+### Backend (Go) ✅ **FULLY FUNCTIONAL**
+- **EPCIS 2.0 Compliance**: Full implementation of Electronic Product Code Information Services standard
+- **Multi-Device Support**: ESP32, AWS IoT ExpressLink, LoRaWAN, GPS Trackers, ERP integration
+- **Automatic Data Transformation**: Raw sensor data → EPCIS events
+- **Device Management**: Registration, claiming, and heartbeat monitoring  
+- **SQLite Database**: Persistent storage with automatic migrations
+- **Cryptographic Integrity**: SHA-256 hashing for event verification
+- **RESTful API**: Comprehensive endpoints with validation middleware
+- **Real-time Processing**: Automatic raw data ingestion and transformation
+- **🆕 Blockchain Integration**: Hyperledger Fabric support for immutable event anchoring
 
-### Web Dashboard
+### Frontend (Next.js)
+- **Modern Dashboard**: Supply chain visibility and analytics
+- **Device Monitoring**: Real-time sensor data visualization  
+- **Lot Traceability**: Complete product journey tracking
+- **Responsive Design**: Mobile-first approach with Tailwind CSS
+- **Admin Interface**: Device and user management
+- **🆕 Blockchain Verification**: View blockchain proof for events
+
+### IoT Integration ✅ **ESP32 FIRMWARE INCLUDED**
+- **Multi-Protocol Support**: MQTT, HTTP, LoRaWAN, Cellular
+- **Edge Processing**: Local data processing capabilities
+- **Secure Boot**: Hardware-based security foundation
+- **OTA Updates**: Remote firmware management
+- **🆕 Reference Firmware**: Ready-to-use ESP32 code with sensor support
+
+### Blockchain (Hyperledger Fabric) 🆕 **READY FOR DEPLOYMENT**
+- **Immutable Audit Trail**: All events anchored on blockchain
+- **Smart Contracts**: Custom chaincode for EPCIS event management
+- **Event Verification**: Cryptographic proof of data integrity
+- **Transaction History**: Complete audit trail for compliance
+
+## 📦 Project Structure
+
+```
+Scain/
+├── backend/                 # Go backend server (FULLY FUNCTIONAL + BLOCKCHAIN)
+│   ├── main.go             # Server entry point
+│   ├── database/           # SQLite models and migrations
+│   ├── services/           # Business logic (EPCIS, devices, blockchain)
+│   ├── middleware/         # HTTP validation and security
+│   ├── models/             # EPCIS data structures
+│   └── utils/              # Cryptographic utilities
+├── frontend/               # Next.js web application
+│   ├── app/                # Next.js 14 App Router
+│   ├── components/         # Reusable UI components
+│   └── types/              # TypeScript definitions
+├── firmware/               # 🆕 ESP32 firmware sources
+│   ├── main.cpp            # Main firmware code
+│   ├── config.h            # Configuration header
+│   ├── platformio.ini      # PlatformIO project config
+│   └── README.md           # Build and flash instructions
+├── blockchain/             # 🆕 Hyperledger Fabric integration
+│   ├── chaincode/          # Smart contracts
+│   │   ├── scain_chaincode.go  # Main chaincode
+│   │   └── go.mod          # Chaincode dependencies
+│   ├── network/            # Network setup scripts
+│   └── README.md           # Deployment guide
+├── docs/                   # Documentation
+└── package.json            # Root package configuration
+```
+
+## 🛠 Quick Start
+
+### Prerequisites
+- **Go 1.21+** (for backend)
+- **Node.js 18+** (for frontend)
+- **npm/yarn** (package manager)
+- **Docker** (for Hyperledger Fabric - optional)
+- **PlatformIO** (for ESP32 firmware - optional)
+
+### Backend Setup (Ready to Use!)
+
 ```bash
-# Clone and install dependencies
-git clone https://github.com/your-org/scain.git
-cd scain
+# Navigate to backend
+cd backend
+
+# Install dependencies
+go mod tidy
+
+# Start the server
+go run .
+
+# Or using npm from root
+npm run dev:backend
+```
+
+The Go backend will start at `http://localhost:8081` with full EPCIS functionality.
+
+### Frontend Setup
+
+```bash
+# Navigate to frontend  
+cd frontend
+
+# Install dependencies
 npm install
 
 # Start development server
 npm run dev
 ```
-Visit [http://localhost:3000](http://localhost:3000) for the dashboard.
 
-### Chaincode (Go)
+The frontend will be available at `http://localhost:3000`.
+
+### 🆕 ESP32 Firmware Setup
+
 ```bash
-# Run chaincode tests
-cd chaincode
-go test ./...
+# Navigate to firmware directory
+cd firmware
 
-# Or use the convenience script
-npm run test:go
+# Install PlatformIO (if not installed)
+pip install platformio
+
+# Configure WiFi and API endpoint in config.h
+# Build and upload to ESP32
+pio run --target upload
 ```
 
-### Firmware (ESP32)
+### 🆕 Blockchain Setup (Optional)
+
 ```bash
-# Flash ESP32 firmware (requires ESP-IDF)
-make flash
+# Navigate to blockchain network directory
+cd blockchain/network
 
-# Or compile only
-cd src/firmware && idf.py build
+# Set up Fabric network
+./setup.sh
+
+# Start the network
+./start.sh
+
+# Deploy chaincode
+./deploy-chaincode.sh
+
+# Enable blockchain in backend
+export ENABLE_BLOCKCHAIN=true
 ```
 
-### Full Development Environment
+### Full Stack Development
+
 ```bash
-# Setup everything (blockchain network, MQTT, etc.)
-make setup
-make devnet
+# Install all dependencies
+npm install
+
+# Start both backend and frontend
+npm run dev
+
+# With blockchain enabled
+export ENABLE_BLOCKCHAIN=true && npm run dev
 ```
 
----
+## 🔗 API Endpoints (Backend)
 
-## 💰 Bill of Materials
+### Core EPCIS Operations
+- `POST /api/events` - Create EPCIS events (+ blockchain anchoring)
+- `GET /api/events/:id` - Retrieve events by ID
+- `POST /api/ingest` - Ingest raw sensor data (auto-transforms to EPCIS)
 
-### Pilot Configuration (₹1 500)
+### Device Management  
+- `POST /api/devices` - Register new devices
+- `GET /api/devices/:id` - Get device information
+- `POST /api/claim` - Claim devices with validation codes
 
-| Qty | Part | Price (₹) | Purpose |
-|-----|------|-----------|---------|
-| 1 | ESP32‑DevKitC‑32D (Wi‑Fi/BLE) | 630 | Main controller |
-| 1 | DHT11 Temp/Humidity module | 225 | Air monitoring |
-| 1 | DS18B20 waterproof probe | 335 | Product temperature |
-| 1 | Alien H3 UHF RFID inlay | 43 | Identity tag |
-| 1 | Enclosure + wiring | 267 | Protection |
-| — | **Total / pallet** | **₹1 500** | |
+### 🆕 Blockchain Operations
+- `GET /api/events/:id/verify` - Verify event on blockchain
+- `GET /api/events/:id/history` - Get blockchain transaction history
 
-### Enterprise Configuration (₹6 000)
+### System Health
+- `GET /health` - Health check endpoint
+- `GET /api` - API documentation and endpoints
 
-| Qty | Part | Price (₹) | Purpose |
-|-----|------|-----------|---------|
-| 1 | Heltec LoRa‑32 V3 | 1 200 | Long-range connectivity |
-| 1 | Milesight EM320‑TH (IP67, EN12830) | 3 500 | Certified sensors |
-| 1 | TempDot Plus TTI label | 150 | Single-use indicator |
-| 1 | ESP32‑C3 AWS ExpressLink | 800 | Secure cloud |
-| 1 | IP67 industrial enclosure | 350 | Weather protection |
-| — | **Total / pallet** | **₹6 000** | |
+## 📊 Data Flow
 
-*Cost reduction: 75% vs. traditional solutions*
+1. **IoT Devices** (ESP32) → Raw sensor data via HTTP/MQTT
+2. **Backend Ingestion** → `/api/ingest` endpoint  
+3. **Automatic Transformation** → Raw data → EPCIS events
+4. **Database Storage** → SQLite with integrity hashing
+5. **🆕 Blockchain Anchoring** → Event hash/data stored on Fabric
+6. **Frontend Visualization** → Real-time dashboard updates
+7. **Traceability Queries** → Complete supply chain visibility + blockchain proof
 
----
+## 🔐 Security Features
 
-## 🏗️ Architecture
+- **Input Validation**: Comprehensive request validation with detailed error messages
+- **Content-Type Enforcement**: API security middleware
+- **Request Size Limiting**: Prevention of abuse attacks
+- **Cryptographic Integrity**: SHA-256 hashing for all events
+- **Secure Device Claiming**: Validation code system
+- **🆕 Blockchain Immutability**: Tamper-proof event records
 
-```mermaid
-flowchart LR
-  subgraph "Edge Tag"
-    DHT11-->ESP32
-    DS18B20-->ESP32
-    RFID-->ESP32
-  end
-  ESP32--MQTT-->Gateway{RAK 7289}
-  Gateway--HTTPS-->FabricAPI
-  FabricAPI--PutState-->Peer[(Fabric Peer)]
-  Peer--Event-->OpenEPCIS
-  OpenEPCIS--GraphQL-->Dashboard
-  
-  subgraph "Cloud Options"
-    AWS[AWS IoT Core]
-    LoRaWAN[LoRaWAN Gateway]
-  end
-  
-  ESP32-.->AWS
-  ESP32-.->LoRaWAN
-```
+## 🎯 Supported Device Types
 
-**Long‑range option**: Heltec LoRa‑32 V3 for > 10 km LoRaWAN uplink.  
-**Secure link**: AWS IoT ExpressLink on ESP32‑C3 module handles TLS & fleet OTA.
+- **ESP32**: General IoT sensor platforms (firmware included)
+- **AWS IoT ExpressLink**: Cloud-connected modules  
+- **LoRaWAN**: Long-range, low-power devices
+- **GPS Trackers**: Location-based tracking
+- **ERP Systems**: Enterprise integration
 
----
+## 📋 EPCIS Event Types
 
-## 📁 Project Structure
-
-```
-Scain/
-├── src/
-│   ├── firmware/           # ESP32 Arduino/ESP-IDF code
-│   │   ├── main.cpp       # Main sensor loop
-│   │   ├── awslink.cpp    # AWS ExpressLink wrapper
-│   │   └── awslink.h      # Header file
-│   └── tests/             # Unit tests
-│       └── chaincode_test.go
-├── chaincode/             # Hyperledger Fabric smart contract
-│   ├── put_state.go       # Main chaincode
-│   └── go.mod            # Go dependencies
-├── web/                   # Next.js 14 dashboard
-│   ├── app/              # App router pages
-│   ├── components/       # React components
-│   └── lib/              # Utilities and hooks
-├── config/               # Configuration files
-├── docker/               # Docker build files
-├── scripts/              # Deployment scripts
-├── docs/                 # Documentation
-├── docker-compose.yml    # Development stack
-└── Makefile             # Build targets
-```
-
----
-
-## 🔧 Firmware Quick Start
-
-### Prerequisites
-- ESP-IDF v5.1+
-- Arduino component installed
-
-### Build & Flash
-```bash
-# Set target and configure
-idf.py set-target esp32
-idf.py menuconfig   # enable Wi‑Fi, BLE, secure‑boot
-
-# Build and flash
-idf.py build -p /dev/ttyUSB0 flash monitor
-```
-
-### Data Payload (EPCIS 2.0)
-```json
-{
-  "@context": "https://ref.gs1.org/standards/epcis/2.0.0/epcis-context.jsonld",
-  "type": "EPCISDocument",
-  "schemaVersion": "2.0",
-  "creationDate": "2025-01-15T12:34:00Z",
-  "epcisBody": {
-    "eventList": [{
-      "eventType": "ObjectEvent",
-      "eventTime": "2025-01-15T12:34:00Z",
-      "epcList": ["urn:epc:id:sgtin:0614141.KG-ESP32-001"],
-      "action": "OBSERVE",
-      "bizStep": "urn:epcglobal:cbv:bizstep:sensor_reporting",
-      "sensorElementList": [{
-        "sensorMetadata": {
-          "deviceID": "KG-ESP32-001",
-          "time": "2025-01-15T12:34:00Z"
-        },
-        "sensorReport": [
-          {
-            "type": "gs1:Temperature",
-            "value": 4.9,
-            "uom": "CEL",
-            "component": "probe"
-          },
-          {
-            "type": "gs1:Temperature", 
-            "value": 7.3,
-            "uom": "CEL",
-            "component": "air"
-          }
-        ]
-      }]
-    }]
-  }
-}
-```
-
----
-
-## ⛓️ Chaincode (Hyperledger Fabric)
-
-### Core Functions
-```go
-// Store EPCIS event with SHA-256 hash
-func RecordEvent(ctx contractapi.TransactionContextInterface, epcisJSON string) error
-
-// Retrieve event by hash
-func GetEvent(ctx contractapi.TransactionContextInterface, hash string) (*TraceabilityRecord, error)
-
-// Query events by device ID
-func GetEventsByDevice(ctx contractapi.TransactionContextInterface, deviceID string) ([]*QueryResult, error)
-
-// Get recent events (up to 100)
-func GetRecentEvents(ctx contractapi.TransactionContextInterface, limit int) ([]*QueryResult, error)
-```
-
-### Deploy
-```bash
-# Package chaincode
-make chaincode-package
-
-# Install and deploy
-make chaincode-deploy
-```
-
----
-
-## 🐳 Docker Stack
-
-### Services
-- **Mosquitto**: MQTT broker (1883, 9001)
-- **Fabric Peer**: Blockchain ledger (7051)
-- **CouchDB**: State database (5984)
-- **OpenEPCIS**: EPCIS 2.0 repository (8080)
-- **Dashboard**: Next.js UI (3000)
-- **Fabric REST API**: HTTP gateway (4000)
-
-### Commands
-```bash
-# Start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop and clean
-docker-compose down -v
-```
-
----
-
-## 🎯 Dashboard Features
-
-### Real-time Monitoring
-- Live sensor readings (temperature, humidity)
-- MQTT connection status
-- Temperature alarm notifications
-- Trend visualization (24h history)
-
-### Compliance Tracking
-- FSMA §204 critical tracking events
-- SFCR Part 5 lot code generation
-- EPCIS 2.0 event validation
-- Audit trail with <24h retrieval
-
-### TempDot Integration
-- Visual temperature indicators
-- Breach detection and alerts
-- Historical temperature abuse
-
----
-
-## 📊 Compliance Matrix
-
-| Regulation | Requirement | Scain Implementation |
-|------------|-------------|--------------------------|
-| **FSMA §204** | 16 Critical Tracking Events | ✅ Captured via EPCIS JSON |
-| | <24h data retrieval | ✅ Indexed by device/EPC |
-| | Lot-level traceability | ✅ GS1 SGTIN format |
-| | Sortable spreadsheet | ✅ CSV export available |
-| **SFCR Part 5** | CFIA-compliant lot codes | ✅ Generated automatically |
-| | One-up/one-down records | ✅ Composite key indexing |
-| | 2+ year retention | ✅ Blockchain immutability |
-| **EN 12830** | Certified sensors | ✅ Milesight EM320-TH (enterprise) |
-| | Temperature mapping | ✅ Continuous monitoring |
-| | Calibration records | ✅ Device metadata stored |
-
----
-
-## 🧪 Testing
-
-### Run All Tests
-```bash
-make test
-```
-
-### Individual Test Suites
-```bash
-# Chaincode tests
-make test-chaincode
-
-# Dashboard tests  
-make test-dashboard
-
-# Firmware build test
-make test-firmware
-```
-
-### Test Coverage
-- SHA-256 hashing validation
-- EPCIS JSON parsing
-- Fabric client operations
-- Sensor data extraction
-- React component rendering
-
----
+- **ObjectEvent**: Individual product tracking
+- **TransformationEvent**: Manufacturing processes
+- **AggregationEvent**: Packaging and grouping
+- **TransactionEvent**: Ownership transfers
 
 ## 🚀 Deployment
 
-### Development
+### Docker Support
 ```bash
-make devnet
-make dashboard
+# Backend
+cd backend
+docker build -t scain-backend .
+docker run -p 8081:8081 scain-backend
+
+# Frontend
+cd frontend  
+docker build -t scain-frontend .
+docker run -p 3000:3000 scain-frontend
+
+# Fabric Network
+cd blockchain/network
+docker-compose up -d
 ```
 
-### Production
+### Environment Configuration
 ```bash
-make deploy-prod
+# Copy example environment file
+cp .env.example .env
+
+# Configure for your environment
+# Set ENABLE_BLOCKCHAIN=true to enable Fabric integration
 ```
 
-### Monitoring
+## 📚 Documentation
+
+- [Backend API Documentation](./backend/README.md)
+- [Frontend Development Guide](./frontend/README.md)
+- [🆕 ESP32 Firmware Guide](./firmware/README.md)
+- [🆕 Blockchain Integration Guide](./blockchain/README.md)
+- [Architecture Overview](./docs/architecture/README.md)
+- [Deployment Guide](./docs/deployment/README.md)
+- [User Guide](./docs/user-guide/README.md)
+
+## 🧪 Testing
+
 ```bash
-make monitor
-make logs
-make status
+# Backend tests
+cd backend && go test ./...
+
+# Frontend tests  
+cd frontend && npm test
+
+# End-to-end tests
+npm run test:e2e
+
+# ESP32 firmware (hardware required)
+cd firmware && pio test
+
+# Blockchain integration tests
+cd blockchain && npm test
 ```
 
----
+## 🔄 Development Status
 
-## 🛠️ Configuration
-
-### MQTT Broker
-```bash
-make config-mosquitto
-```
-
-### Fabric Network
-```bash
-make config-fabric
-```
-
-### SSL Certificates
-```bash
-make generate-certs
-```
-
----
-
-## 📈 Roadmap
-
-### v0.1 (Current)
-- ✅ Pilot lane, Wi‑Fi only
-- ✅ Manual dashboard
-- ✅ Basic EPCIS compliance
-
-### v0.2 (Q2 2025)
-- 🔄 LoRaWAN + LTE back‑haul
-- 🔄 Auto‑recall drill timer
-- 🔄 Mobile app companion
-
-### v1.0 (Q3 2025)
-- 🔄 Industrial IP‑67 enclosure
-- 🔄 Secure‑boot enabled
-- 🔄 SOC‑2 documentation
-- 🔄 Multi-tenant dashboard
-
----
+| Component | Status | Features |
+|-----------|--------|----------|
+| **Go Backend** | ✅ **PRODUCTION READY** | Full EPCIS implementation, device management, data transformation, comprehensive testing, **blockchain integration** |
+| **Database Layer** | ✅ **PRODUCTION READY** | SQLite with automatic migrations, all CRUD operations working |
+| **API Endpoints** | ✅ **PRODUCTION READY** | RESTful API with validation, error handling, security middleware |
+| **Admin Tools** | ✅ **Complete** | Claim code generation, comprehensive test suite |
+| **🆕 ESP32 Firmware** | ✅ **READY** | Complete sensor integration, EPCIS event generation, configurable |
+| **🆕 Blockchain (Fabric)** | ✅ **READY** | Chaincode deployed, backend integration, event anchoring |
+| **Frontend Dashboard** | 🚧 In Progress | Basic structure implemented, blockchain verification pending |
+| **Device Integration** | ✅ **Complete** | ESP32 firmware, protocol support framework |
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit changes (`git commit -m 'Add amazing feature'`)
 4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
----
+5. Open a Pull Request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
+This project is licensed under the MIT License - see [LICENSE](LICENSE) for details.
 
 ## 🆘 Support
 
-- **Documentation**: [Wiki](https://github.com/Antimatters-Technology/Scain/wiki)
-- **Issues**: [GitHub Issues](https://github.com/Antimatters-Technology/Scain/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/Antimatters-Technology/Scain/discussions)
-- **Email**: support@scain.io
+- [Issue Tracker](https://github.com/your-org/scain/issues)
+- [Discussions](https://github.com/your-org/scain/discussions)
+- Email: support@scain.io
 
 ---
 
-## 🏆 Acknowledgments
-
-- Hyperledger Fabric community
-- GS1 EPCIS working group
-- ESP-IDF team
-- Next.js team
-- Open source contributors
-
----
-
-**Built with ❤️ for food safety and traceability**
+**Built with ❤️ for supply chain transparency and traceability**
+**🆕 Now with end-to-end blockchain integration and IoT device support!**

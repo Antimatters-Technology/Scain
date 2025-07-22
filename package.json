@@ -8,14 +8,19 @@
   ],
   "scripts": {
     "dev": "npm run dev --prefix frontend",
-    "build": "npm run build --prefix frontend",
+    "dev:backend": "cd backend && go run .",
+    "dev:full": "concurrently \"npm run dev:backend\" \"npm run dev --prefix frontend\"",
+    "build": "npm run build --prefix frontend && npm run build:backend",
+    "build:frontend": "npm run build --prefix frontend", 
+    "build:backend": "cd backend && go build -o ../scain-backend .",
     "start": "npm run start --prefix frontend",
-    "lint": "npm run lint --prefix frontend",
+    "start:backend": "./scain-backend",
+    "lint": "npm run lint --prefix frontend && cd backend && go fmt ./... && go vet ./...",
+    "test": "npm run test:backend",
+    "test:backend": "cd backend && go test ./...",
     "install:frontend": "npm install --prefix frontend",
-    "test:go": "cd chaincode && go test ./...",
-    "test:chaincode": "cd src/tests && go test ./...",
-    "devnet": "make devnet",
-    "flash": "make flash"
+    "install:backend": "cd backend && go mod tidy",
+    "clean": "rm -f scain-backend && cd backend && go clean"
   },
   "keywords": [
     "food-traceability",
@@ -31,6 +36,7 @@
   },
   "engines": {
     "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "npm": ">=8.0.0",
+    "go": ">=1.21.0"
   }
 } 
