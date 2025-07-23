@@ -28,6 +28,7 @@ type Event struct {
 	DeviceTimestamp     *time.Time `json:"deviceTimestamp"`
 	Hash                string    `json:"hash"`
 	RawData             string    `gorm:"type:text" json:"rawData"` // Store full EPCIS event as JSON
+	BlockchainTxID      *string   `json:"blockchainTxId"`
 	CreatedAt           time.Time `json:"createdAt"`
 	UpdatedAt           time.Time `json:"updatedAt"`
 }
@@ -123,6 +124,11 @@ func GetEventByID(id string) (*Event, error) {
 		return nil, err
 	}
 	return &event, nil
+}
+
+// UpdateEvent updates an existing event in the database by ID
+func UpdateEvent(event *Event) error {
+	return DB.Model(&Event{}).Where("id = ?", event.ID).Updates(event).Error
 }
 
 // CreateDevice creates a new device in the database
