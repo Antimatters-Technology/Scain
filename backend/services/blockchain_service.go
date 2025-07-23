@@ -37,11 +37,24 @@ func NewBlockchainService() (*BlockchainService, error) {
 		ccpPath = "./blockchain/network/connection-profile.yaml"
 	}
 
-	// Create gateway connection
+	// Create wallet and gateway connection
+	walletPath := os.Getenv("FABRIC_WALLET_PATH")
+	if walletPath == "" {
+		walletPath = "wallet"
+	}
+	wallet, err := gateway.NewFileSystemWallet(walletPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create wallet: %w", err)
+	}
+
+	userID := os.Getenv("FABRIC_USER_ID")
+	if userID == "" {
+		userID = "appUser"
+	}
+
 	gw, err := gateway.Connect(
 		gateway.WithConfig(config.FromFile(ccpPath)),
-		gateway.WithIdentity(os.Getenv("FABRIC_WALLET_PATH"), os.Getenv("FABRIC_USER_ID")),
-		gateway.WithDiscovery(true),
+		gateway.WithIdentity(wallet, userID),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to gateway: %w", err)
@@ -141,7 +154,7 @@ func (bs *BlockchainService) VerifyEvent(eventID string, eventData interface{}) 
 // Close closes the gateway connection
 func (bs *BlockchainService) Close() error {
 	if bs.gateway != nil {
-		return bs.gateway.Close()
+		bs.gateway.Close()
 	}
 	return nil
 }
