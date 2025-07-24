@@ -11,7 +11,7 @@
     "dev:backend": "cd backend && go run .",
     "dev:full": "concurrently \"npm run dev:backend\" \"npm run dev --prefix frontend\"",
     "build": "npm run build --prefix frontend && npm run build:backend",
-    "build:frontend": "npm run build --prefix frontend", 
+    "build:frontend": "npm run build --prefix frontend",
     "build:backend": "cd backend && go build -o ../scain-backend .",
     "start": "npm run start --prefix frontend",
     "start:backend": "./scain-backend",
@@ -38,5 +38,9 @@
     "node": ">=18.0.0",
     "npm": ">=8.0.0",
     "go": ">=1.21.0"
+  },
+  "dependencies": {
+    "@next-auth/prisma-adapter": "^1.0.7",
+    "next-auth": "^4.24.11"
   }
-} 
+}
