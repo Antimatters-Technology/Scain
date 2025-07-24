@@ -1,5 +1,8 @@
 import { Suspense } from 'react'
 import { Metadata } from 'next'
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../lib/authOptions';
+import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { CardSensor } from '@/components/CardSensor'
 import { TimelineLot } from '@/components/TimelineLot'
@@ -57,7 +60,11 @@ const mockSensorData = [
   }
 ]
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    redirect('/login');
+  }
   // Calculate KPIs
   const totalLots = mockSensorData.length
   const activeLots = mockSensorData.filter(lot => new Date(lot.timestamp) > new Date(Date.now() - 24 * 60 * 60 * 1000)).length
