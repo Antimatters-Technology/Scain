@@ -1,0 +1,32 @@
+{
+  "epcis": {
+    "@context": [
+      "https://gs1.github.io/EPCIS/epcis-context.jsonld",
+      {
+        "cbvmda": "urn:epcglobal:cbv:mda:"
+      }
+    ],
+    "type": "EPCISDocument",
+    "schemaVersion": "2.0",
+    "creationDate": "2025-07-24T12:00:00Z",
+    "epcisBody": {
+      "eventList": [
+        {
+          "type": "ObjectEvent",
+          "eventTime": "2025-07-24T12:00:00Z",
+          "eventTimeZoneOffset": "+05:30",
+          "epcList": ["urn:epc:id:sgtin:0614141.107346.2017"],
+          "action": "OBSERVE",
+          "bizStep": "cbvmda:receiving",
+          "disposition": "cbvmda:in_progress",
+          "readPoint": { "id": "urn:epc:id:sgln:0614141.07346.1234" },
+          "bizLocation": { "id": "urn:epc:id:sgln:0614141.07346.0" },
+          "extensions": {
+            "temperature": 4.2,
+            "humidity": 60
+          }
+        }
+      ]
+    }
+  }
+} 
