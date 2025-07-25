@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../../lib/authOptions';
+import { authOptions } from '@/lib/authOptions';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { CardSensor } from '@/components/CardSensor'
